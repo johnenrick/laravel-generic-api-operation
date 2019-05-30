@@ -1,0 +1,1 @@
+This project allows you to apply basic API operations to your controller such as CRUD, pagination, and others. The retrieval of data follows the graphql style where you can specify what data you want to retrieve
