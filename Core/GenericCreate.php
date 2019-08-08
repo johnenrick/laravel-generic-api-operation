@@ -15,19 +15,17 @@ class GenericCreate extends Controller
     $this->model = $model;
   }
   public function create($entry){
-
     $result = $this->createEntryRecursively($entry, $this->model,$this->tableStructure);
     return $result;
   }
   public function createEntryRecursively($entry, $model, $tableStructure){
     $result = [];
     $entryToSave = $this->entryAllowedData($entry, $tableStructure);
-      $id = $model->createEntry($entryToSave);
-      $result['id'] = $id;
+    $id = $model->createEntry($entryToSave);
+    $result['id'] = $id;
     foreach($tableStructure['foreign_tables'] as $foreignTableName => $foreignTable){ // loop the foreign tables
       $foreignColumnName = str_singular($tableStructure['table_name']) .'_id';
       if(isset($foreignTable['columns'][$foreignColumnName]) && isset($entry[$foreignTableName])){ // insert as child && entry has foreign table
-
         if($foreignTable['multiple']){
           foreach($entry[$foreignTableName] as $x => $value){
             $foreignTableModel = new $foreignTable['model_name']();

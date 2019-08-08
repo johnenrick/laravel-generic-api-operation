@@ -7,6 +7,8 @@ use Core\GenericCreate;
 use Core\GenericFormValidation;
 use Illuminate\Support\Facades\Validator;
 use Core\TableStructure;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Request as requester;
 use App;
 
@@ -47,8 +49,10 @@ class GenericController extends Controller
       $this->tableStructure = (new Core\TableStructure($this->tableStructure, $this->model))->getStructure();
       $this->responseGenerator = new Core\ResponseGenerator();
 
-      if(config()->set('payload') == null){
+      if(config()->set('payload') == null && requester::input('PAYLOAD')){
         config()->set('payload', requester::input('PAYLOAD'));
+      }else{
+        config()->set('payload', ['id' => 55]); // set sample config
       }
       // $this->responseGenerator->addDebug('request', requester::input());
       $this->responseGenerator->addDebug('payload', config('payload'));
@@ -164,6 +168,31 @@ class GenericController extends Controller
         return true;
       }
     }
+    public function requestUploadTicket($quantity, $remarks){
+      try {
+        $param = [
+          "expected_file_quantity" => $quantity,
+          "note" => $remarks
+        ];
+        $client = new Client(); //GuzzleHttp\Client
+          $result = $client->request('POST', env('FILE_SERVER').'/v1/get-ticket', [
+          'json' => $param
+        ]);
+        $result = json_decode((string)$result->getBody(), true);
+        $resultObject = ['upload_ticket_id' => $result['data']['id'], 'upload_location' => $result['data']['location']];
+        return $resultObject;
+      } catch (GuzzleException $e) {
+        if(!$e->getResponse()){
+          $this->responseGenerator->addDebug('linkgetenv', getenv('FILE_SERVER').'/v1/get-ticket');
+          $this->responseGenerator->addDebug('linkenv', env('FILE_SERVER').'/v1/get-ticket');
+        }else if($e->getResponse()->getStatusCode() == 422){ // validation error
+          $response = json_decode((string)$e->getResponse()->getBody(), true);
+          $this->responseGenerator->setFail(['code' => 422, "message" => $response]);
+        }
+        return false;
+      }
+    }
+
     public function user($key = "id"){
       if(auth()->user()){
         $user = auth()->user()->toArray();

@@ -118,6 +118,10 @@ class GenericModel extends Model
     unset($entry['updated_at']);
     unset($entry['deleted_at']);
     $currentData = $this->where('id', $id)->get()->toArray();
+    if(!count($currentData)){
+      echo 'updating non existent entry' . $id;
+      return null;
+    }
     $withCompanyID = false;
     if(config('payload.company_id') * 1 !== 1){
       if(isset($entry['company_id'])){

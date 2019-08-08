@@ -31,6 +31,7 @@ class GenericFormValidation extends Controller
         if($foreignTableName){
           $prefix = $foreignTableName.".".(($foreignTableName == str_plural($foreignTableName)) ? '*.' :'');
         }
+
         $rules = isset($columnSetting['validation'])?  explode("|", $columnSetting['validation']) : [];
         $finalizedRule = [];
         foreach($rules as $rule){
@@ -53,7 +54,8 @@ class GenericFormValidation extends Controller
                   $finalizedRule[] = $rule;
                 }else if($this->apiOperation == "update"){
                   if($foreignTableName && $foreignTableName == str_plural($foreignTableName) && $column != 'id' && $singularParent.'_id' != $column){
-                    $finalizedRule[] = "required_without:".$foreignTableName.$prefix."id";
+                    // $finalizedRule[] = "required_without:".$foreignTableName.$prefix."id";
+                    $finalizedRule[] = "required_without:".$prefix."id";
                   }
                 }
               }else{
@@ -67,8 +69,6 @@ class GenericFormValidation extends Controller
                   $finalizedRule[] = 'min:1';
                 }
               }
-
-
               break;
             case "required_with":
               if($foreignTableName){

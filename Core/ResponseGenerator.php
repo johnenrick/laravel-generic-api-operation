@@ -48,10 +48,5 @@ class ResponseGenerator extends Controller
         ($this->totalResult) ? $this->response['additional_data']['total_result'] = $this->totalResult : null;
         return response()->json($this->response, 200);
       }
-
-
-
-
-
     }
 }

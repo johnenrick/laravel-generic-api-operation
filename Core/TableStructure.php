@@ -21,6 +21,7 @@ class TableStructure
     $tableStructure = $this->tableStructure;
     $tableStructure = $this->setColumnsDefault($tableStructure, $this->model);
     $tableStructure['table_name'] = $this->model->getTable();
+    $tableStructure['true_table'] = $tableStructure['table_name'];
     $tableStructure['validation_required'] = true;
     $tableStructure = $this->initForeignTableStructure($tableStructure);
     $this->tableStructure = $tableStructure;
@@ -29,7 +30,12 @@ class TableStructure
     if(isset($tableStructure['foreign_tables']) && count($tableStructure['foreign_tables'])){
       $treeMap = $treeMap == null ? $tableStructure['table_name'] : $treeMap.'.'.$treeMap;
       foreach($tableStructure['foreign_tables'] as $foreignTableName => $foreignTableStructure){
-        $foreignTableModelClassName = "App\\".strToPascal(str_singular($foreignTableName));
+        $trueTable = $foreignTableName;
+        if(isset($foreignTableStructure['true_table'])){
+          $trueTable = $foreignTableStructure['true_table'];
+        }
+        $foreignTableStructure['true_table'] = str_plural($trueTable);
+        $foreignTableModelClassName = "App\\".(strToPascal(str_singular($trueTable)));
         $foreignTableStructure = $this->setColumnsDefault($foreignTableStructure, new $foreignTableModelClassName());
         $foreignTableStructure['model_name'] = $foreignTableModelClassName;
         $foreignTableStructure['table_name'] = str_plural($foreignTableName);
@@ -37,10 +43,11 @@ class TableStructure
         $foreignTableStructure['tree_map'] = $treeMap;
         $foreignTableStructure[''] =
         $tableStructure['foreign_tables'][$foreignTableName] = $this->initForeignTableStructure($foreignTableStructure, $treeMap);
-        $tableStructure['foreign_tables'][$foreignTableName]['is_child'] = false;
-        if(isset($tableStructure['foreign_tables'][$foreignTableName]['columns'][   str_singular($tableStructure['table_name'])."_id"   ])){ // check if foreign table is child or parent
-          $tableStructure['foreign_tables'][$foreignTableName]['is_child'] = true;
-        }else{
+        if(!isset($tableStructure['foreign_tables'][$foreignTableName]['is_child'])){
+          $tableStructure['foreign_tables'][$foreignTableName]['is_child'] = false;
+          if(isset($tableStructure['foreign_tables'][$foreignTableName]['columns'][   str_singular($tableStructure['table_name'])."_id"   ])){ // check if foreign table is child or parent
+            $tableStructure['foreign_tables'][$foreignTableName]['is_child'] = true;
+          }
         }
         $tableStructure['foreign_tables'][$foreignTableName]['validation_required'] = isset($foreignTableStructure['validation_required']) ? $foreignTableStructure['validation_required'] : $tableStructure['foreign_tables'][$foreignTableName]['is_child'];
       }
