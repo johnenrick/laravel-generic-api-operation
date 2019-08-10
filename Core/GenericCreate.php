@@ -29,11 +29,13 @@ class GenericCreate extends Controller
         if($foreignTable['multiple']){
           foreach($entry[$foreignTableName] as $x => $value){
             $foreignTableModel = new $foreignTable['model_name']();
+            $foreignTableModel->useSessionCompanyID = $model->useSessionCompanyID;
             $entry[$foreignTableName][$x][$foreignColumnName] = $id;
             $result[$foreignTableName][$x] = $this->createEntryRecursively($entry[$foreignTableName][$x], $foreignTableModel, $foreignTable);
           }
         }else{
           $foreignTableModel = new $foreignTable['model_name']();
+          $foreignTableModel->useSessionCompanyID = $model->useSessionCompanyID;
           $entry[$foreignTableName][$foreignColumnName] = $id;
           $result[$foreignTableName] = $this->createEntryRecursively($entry[$foreignTableName], $foreignTableModel, $foreignTable);
         }

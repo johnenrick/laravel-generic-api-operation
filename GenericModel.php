@@ -93,11 +93,16 @@ class GenericModel extends Model
     //   exit();
     // }
     if($entry !== null){
-        unset($entry['id']);
+      unset($entry['id']);
+      if(isset($entry['created_at'])){
         unset($entry['created_at']);
+      }
+      if(isset($entry['updated_at'])){
         unset($entry['updated_at']);
+      }
+      if(isset($entry['deleted_at'])){
         unset($entry['deleted_at']);
-
+      }
       foreach($entry as $entryColumn => $entryValue){
         $value = $entryValue;
         if($this->useSessionCompanyID && ($entryColumn == 'company_id' && config('payload.company_id') * 1 !== 1)){
@@ -114,9 +119,15 @@ class GenericModel extends Model
   public function updateEntry($id, $entry, $foreignColumn = null, $foreignID = 0){
     $entry = $this->systemGenerateValue($entry);
     unset($entry['id']);
-    unset($entry['created_at']);
-    unset($entry['updated_at']);
-    unset($entry['deleted_at']);
+    if(isset($entry['created_at'])){
+      unset($entry['created_at']);
+    }
+    if(isset($entry['updated_at'])){
+      unset($entry['updated_at']);
+    }
+    if(isset($entry['deleted_at'])){
+      unset($entry['deleted_at']);
+    }
     $currentData = $this->where('id', $id)->get()->toArray();
     if(!count($currentData)){
       echo 'updating non existent entry' . $id;
@@ -151,9 +162,15 @@ class GenericModel extends Model
     if($foreignID * 1){
       $this->where($foreignColumn, $foreignID);
     }
-    unset($currentData[0]['created_at']);
-    unset($currentData[0]['updated_at']);
-    unset($currentData[0]['deleted_at']);
+    if(isset($currentData[0]['created_at'])){
+      unset($currentData[0]['created_at']);
+    }
+    if(isset($currentData[0]['updated_at'])){
+      unset($currentData[0]['updated_at']);
+    }
+    if(isset($currentData[0]['deleted_at'])){
+      unset($currentData[0]['deleted_at']);
+    }
     if($withCompanyID){
       return $this->where("id", $id)->where('company_id', $this->userSession('company_id'))->update($currentData[0]);
     }else{
@@ -170,7 +187,6 @@ class GenericModel extends Model
   public function userSession($key = "id"){
     if(config('payload')){
       $user = config('payload');
-
       if($key){
         return $user[$key];
       }else{
