@@ -52,7 +52,11 @@ class GenericController extends Controller
       if(config()->set('payload') == null && requester::input('PAYLOAD')){
         config()->set('payload', requester::input('PAYLOAD'));
       }else{
-        config()->set('payload', ['id' => 55]); // set sample config
+        config()->set('payload', [
+          'id' => 55,
+          'company_id' => 74,
+          'roles.100' => true
+        ]); // set sample config
       }
       // $this->responseGenerator->addDebug('request', requester::input());
       $this->responseGenerator->addDebug('payload', config('payload'));
@@ -66,9 +70,6 @@ class GenericController extends Controller
         $request Request required the request object
     */
     public function create(Request $request){
-      if(!$this->checkAuthenticationRequirement($this->basicOperationAuthRequired["create"])){
-        return $this->responseGenerator->generate();
-      }
       $requestData = $request->all();
       $resultObject = $this->createUpdateEntry($requestData);
       $this->responseGenerator->setSuccess($resultObject['success']);
@@ -193,20 +194,16 @@ class GenericController extends Controller
       }
     }
 
-    public function user($key = "id"){
-      if(auth()->user()){
-        $user = auth()->user()->toArray();
-        if(auth()->getPayload()->get('custom')){
-          $custom = get_object_vars(auth()->getPayload()->get('custom'));
-          $user = array_merge($user, $custom);
-        }
-        if($key){
-          return $user[$key];
+    public function userSession($key = "id"){
+      if($key){
+        if(config('payload.'.$key)){
+          return config('payload.'.$key);
         }else{
-          return $user;
+          $config = config('payload');
+          return isset($config[$key]) ? $config[$key] : null;
         }
       }else{
-        return null;
+        return config('payload');
       }
     }
 }

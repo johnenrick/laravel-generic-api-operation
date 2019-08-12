@@ -86,6 +86,7 @@ class GenericModel extends Model
     return $enum;
   }
   public function createEntry($entry){
+
     $entry = $this->systemGenerateValue($entry);
 
     // if($entry == null){
@@ -103,16 +104,22 @@ class GenericModel extends Model
       if(isset($entry['deleted_at'])){
         unset($entry['deleted_at']);
       }
+      $columns = array_flip($this->getTableColumns());
+      if(!isset($entry['company_id']) && isset($columns['company_id'])){
+        $entry['company_id'] = $this->userSession('company_id');
+      }
       foreach($entry as $entryColumn => $entryValue){
         $value = $entryValue;
-        if($this->useSessionCompanyID && ($entryColumn == 'company_id' && config('payload.company_id') * 1 !== 1)){
+        if($this->useSessionCompanyID && ($entryColumn == 'company_id' && !$this->userSession('roles.1'))){
           $value = $this->userSession('company_id');
         }else if($value == null){
           $value = isset($this->defaultValue[$entryColumn]) ? $this->defaultValue[$entryColumn] : $value;
         }
         $this->$entryColumn = $value;
       }
+
     }
+
     $this->save();
     return $this->id;
   }
@@ -134,18 +141,18 @@ class GenericModel extends Model
       return null;
     }
     $withCompanyID = false;
-    if(config('payload.company_id') * 1 !== 1){
-      if(isset($entry['company_id'])){
-        $currentData[0]['company_id'] = $this->userSession('company_id');
-        unset($entry['company_id']);
-      }
-      $withCompanyID = isset($this->getTableColumns()['company_id']);
+    $columns = array_flip($this->getTableColumns());
+    if($this->useSessionCompanyID && !$this->userSession('roles.1') && isset($columns['company_id'])){
+      $currentData[0]['company_id'] = $this->userSession('company_id');
+      unset($entry['company_id']);
+      $withCompanyID = true;
     }
     foreach($entry as $entryColumn => $entryValue){
       $value = $entryValue;
       if($entryValue == null && isset($this->defaultValue[$entryColumn])){
         $value = $this->defaultValue[$entryColumn];
       }
+
       if(($value == "\"\"" || $value == "''" || $value == "\'\'") && !is_numeric($value)){
         $value = "";
 
@@ -185,15 +192,11 @@ class GenericModel extends Model
     }
   }
   public function userSession($key = "id"){
-    if(config('payload')){
-      $user = config('payload');
-      if($key){
-        return $user[$key];
-      }else{
-        return $user;
-      }
+    if($key){
+      $config = config('payload');
+      return isset($config[$key]) ? $config[$key] : null;
     }else{
-      return null;
+      return config('payload');
     }
   }
 }

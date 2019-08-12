@@ -39,11 +39,12 @@ class GenericRetrieve extends Controller
       $this->requestQuery['select'] = $this->removeUnwantedSelectForeignTable($this->requestQuery['select'], $this->tableStructure, null, $this->requesPostQuery);
     }
     public function executeQuery(){
+      $leftJoinedTable = [];
       if($this->customQueryModel){
         $customQueryModel = $this->customQueryModel;
-        $this->model = $customQueryModel($this->model);
+        $this->model = $customQueryModel($this->model, $leftJoinedTable);
       }
-      $this->model = $this->addQueryStatements($this->model, $this->requestQuery, $this->tableStructure);
+      $this->model = $this->addQueryStatements($this->model, $this->requestQuery, $this->tableStructure, $leftJoinedTable);
       $this->resultArray = $this->model->get()->toArray();
       if(isset($this->requestQuery['id']) && $this->requestQuery['id']){
         if(count($this->resultArray)){
@@ -65,8 +66,7 @@ class GenericRetrieve extends Controller
         }
       }
     }
-    public function addQueryStatements($queryModel, $requestQuery, $tableStructure){
-      $leftJoinedTable  = [];
+    public function addQueryStatements($queryModel, $requestQuery, $tableStructure, $leftJoinedTable = []){
       $select = [];
       $with = [];
       // $queryModel->addSelect('id');
@@ -82,7 +82,7 @@ class GenericRetrieve extends Controller
           $queryModel = $queryModel->addSelect(DB::raw("$slectedColumn as ".$selectIndex));
         }else{
           $with[$selectIndex] = function($queryModel2) use($select, $selectIndex, $tableStructure){
-            $this->addQueryStatements($queryModel2, $select, $tableStructure['foreign_tables'][$selectIndex]);
+            $this->addQueryStatements($queryModel2, $select, $tableStructure['foreign_tables'][$selectIndex], []);
           };
         }
       }
@@ -111,8 +111,7 @@ class GenericRetrieve extends Controller
       foreach($requestQueryCondition as $condition){
         $column = $condition['column'];
 
-        $queryModel = $this->addLeftJoin($queryModel, $leftJoinedTable, $column, $tableStructure); // the column is passed by address because the function will change the its value
-
+        $queryModel = $this->addLeftJoin($queryModel, $leftJoinedTable, $column, $tableStructure); // the column is passed by address because the function will change its value
         $condition['clause'] = isset($condition['clause']) ? $condition['clause'] : '=';
         switch($condition['clause']){
           case 'not_in':
@@ -130,7 +129,6 @@ class GenericRetrieve extends Controller
     public function addSortStatement($queryModel, $requestQuerySort, &$leftJoinedTable, $tableStructure){
       foreach($requestQuerySort as $sort){
         $column = $sort['column'];
-
         $queryModel = $this->addLeftJoin($queryModel, $leftJoinedTable, $column, $tableStructure); // the column is passed by address because the function will change the its value
         $explodedColumn = explode(".", $column);
         $rawColumn = $column;
@@ -149,31 +147,25 @@ class GenericRetrieve extends Controller
 
     */
     public function addLeftJoin($queryModel, &$leftJoinedTable, &$column, $tableStructure){
-      if($this->isleftJoined){
-        return $queryModel;
-      }else{
-        $this->isleftJoined = true;
-      }
       $columnSplitted = explode(".", $column);
-      if(count($columnSplitted) == 2){ // table.column
+      if(count($columnSplitted) >= 2){ // table.column
         $table = $columnSplitted[0];
-        $currentColumn = $columnSplitted[1];
-        if(in_array($table, $leftJoinedTable)){
-          return $queryModel;
-        }
         $tablePlural = str_plural($table);
-        $mainTable = $tableStructure['table_name'];
-        if(isset($tableStructure['foreign_tables'][$table])){
-          if($tableStructure['foreign_tables'][$table]['is_child']){
-            $queryModel = $queryModel->join($tablePlural, function($join) use ($mainTable, $tablePlural){
-              $join->on(str_plural($mainTable).".id", '=', $tablePlural.".".str_singular($mainTable)."_id");
-            });
-          }else{
+        $currentColumn = $columnSplitted[1];
+        if(!in_array($tablePlural, $leftJoinedTable)){
+          $leftJoinedTable[] = $tablePlural;
+          $mainTable = $tableStructure['table_name'];
+          if(isset($tableStructure['foreign_tables'][$table])){
+            if($tableStructure['foreign_tables'][$table]['is_child']){
+              $queryModel = $queryModel->join($tablePlural, function($join) use ($mainTable, $tablePlural){
+                $join->on(str_plural($mainTable).".id", '=', $tablePlural.".".str_singular($mainTable)."_id");
+              });
+            }else{
 
-            $queryModel = $queryModel->join($tablePlural, $tablePlural.".id", "=", str_plural($mainTable).".".str_singular($table)."_id");
+              $queryModel = $queryModel->join($tablePlural, $tablePlural.".id", "=", str_plural($mainTable).".".str_singular($table)."_id");
+            }
           }
         }
-        $leftJoinedTable[] = $tablePlural;
         if(isset($tableStructure['foreign_tables'][$table]['columns'][$currentColumn]['formula'])){
           $column = $tableStructure['foreign_tables'][$table]['columns'][$currentColumn]['formula'];
         }else{
@@ -184,9 +176,8 @@ class GenericRetrieve extends Controller
       }else{
         if(isset($tableStructure['columns'][$column]['formula'])){
           $column = $tableStructure['columns'][$column]['formula'];
-        }else{
-          $column = $tableStructure['table_name'].".".$column;
         }
+          $column = str_plural($tableStructure['table_name']).".".$column;
 
       }
       return $queryModel;
