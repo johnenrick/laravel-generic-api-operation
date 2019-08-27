@@ -72,7 +72,7 @@ class TableStructure
       if(!isset($tableStructure['columns'][$columnName])){ // set undefined column in table struture
         $tableStructure['columns'][$columnName] = [];
       }
-      if(!isset($tableStructure['columns'][$columnName]['validation'])){
+      if(!isset($tableStructure['columns'][$columnName]['validation']) && isset($tableStructure['columns'][$columnName]) && isset($tableValidationRule[$columnName])){
         $tableStructure['columns'][$columnName]['validation'] = $tableValidationRule[$columnName];
       }else{ // merge controller level validation
         // TODO
