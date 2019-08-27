@@ -34,7 +34,7 @@ class GenericDelete extends Controller
       switch($condition['clause']){
         default:
         // echo get_class($this->model);
-        $this->model = $this->model->where($condition['column'], $condition['clause'], $condition['value']);
+        $this->model->where($condition['column'], $condition['clause'], $condition['value']);
         // echo get_class($this->model);
       }
     }

@@ -15,7 +15,6 @@ class GenericUpdate extends Controller
     $this->model = $model;
   }
   public function update($entry){
-    
     $result = $this->updateEntryRecursively($entry, $this->model,$this->tableStructure);
     return $result;
   }

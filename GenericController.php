@@ -38,6 +38,7 @@ class GenericController extends Controller
     public $model;
     public $responseGenerator;
     public $user = [];
+    public $deleteWithUserId = false;
     public $basicOperationAuthRequired = [
       "create" => false,
       "retrieve" => false,
@@ -109,9 +110,6 @@ class GenericController extends Controller
       return $this->responseGenerator->generate();
     }
     public function delete(Request $request){
-      if(!$this->checkAuthenticationRequirement($this->basicOperationAuthRequired["delete"])){
-        return $this->responseGenerator->generate();
-      }
       $requestData = $request->all();
       $resultObject = $this->deleteEntry($requestData['id']);
       $this->responseGenerator->setSuccess($resultObject['success']);
@@ -147,6 +145,12 @@ class GenericController extends Controller
         "success" => false,
         "fail" => false
       ];
+      if($this->deleteWithUserId){
+        $condition = [[
+          'column' => 'user_id',
+          'value' => $this->userSession()
+        ]];
+      }
       $genericDelete = new Core\GenericDelete($this->tableStructure, $this->model);
       $resultObject['success'] = $genericDelete->delete($id, $condition);
       return $resultObject;
