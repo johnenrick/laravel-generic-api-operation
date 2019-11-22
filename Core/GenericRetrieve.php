@@ -79,7 +79,7 @@ class GenericRetrieve extends Controller
             $slectedColumn = $tableStructure['true_table'].".".$selectIndex;
           }
 
-          $queryModel = $queryModel->addSelect(DB::raw("$slectedColumn as ".$selectIndex));
+          $queryModel->addSelect(DB::raw("$slectedColumn as ".$selectIndex));
         }else{
           $with[$selectIndex] = function($queryModel2) use($select, $selectIndex, $tableStructure){
             $this->addQueryStatements($queryModel2, $select, $tableStructure['foreign_tables'][$selectIndex], []);

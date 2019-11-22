@@ -54,7 +54,7 @@ class GenericController extends Controller
         config()->set('payload', requester::input('PAYLOAD'));
       }else{
         config()->set('payload', [
-          'id' => 55,
+          'id' => 56,
           'company_id' => 74,
           'roles.100' => true
         ]); // set sample config
@@ -111,7 +111,7 @@ class GenericController extends Controller
     }
     public function delete(Request $request){
       $requestData = $request->all();
-      $resultObject = $this->deleteEntry($requestData['id']);
+      $resultObject = $this->deleteEntry($requestData['id'], isset($requestData['condition']) ? $requestData['condition'] : null);
       $this->responseGenerator->setSuccess($resultObject['success']);
       $this->responseGenerator->setFail($resultObject['fail']);
       return $this->responseGenerator->generate();
@@ -209,5 +209,8 @@ class GenericController extends Controller
       }else{
         return config('payload');
       }
+    }
+    public function test(){
+      return "API exists";
     }
 }
