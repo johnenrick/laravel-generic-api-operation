@@ -8,16 +8,6 @@ use App\Http\Controllers\Controller;
 
 class GenericRetrieve extends Controller
 {
-    /***
-      [
-        select => [
-            tae =>
-          ],
-          [
-            table
-          ]
-        ]
-    */
     private $tableStructure;
     private $model;
     private $requestQuery;
@@ -45,6 +35,9 @@ class GenericRetrieve extends Controller
         $this->model = $customQueryModel($this->model, $leftJoinedTable);
       }
       $this->model = $this->addQueryStatements($this->model, $this->requestQuery, $this->tableStructure, $leftJoinedTable);
+      if(isset($this->requestQuery['with_trash']) && $this->requestQuery['with_trash'] == true){
+        $this->model = $this->model->withTrashed();
+      }
       $this->resultArray = $this->model->get()->toArray();
       if(isset($this->requestQuery['id']) && $this->requestQuery['id']){
         if(count($this->resultArray)){
@@ -79,7 +72,7 @@ class GenericRetrieve extends Controller
             $slectedColumn = $tableStructure['true_table'].".".$selectIndex;
           }
 
-          $queryModel->addSelect(DB::raw("$slectedColumn as ".$selectIndex));
+          $queryModel = $queryModel->addSelect(DB::raw("$slectedColumn as ".$selectIndex));
         }else{
           $with[$selectIndex] = function($queryModel2) use($select, $selectIndex, $tableStructure){
             $this->addQueryStatements($queryModel2, $select, $tableStructure['foreign_tables'][$selectIndex], []);
@@ -119,6 +112,12 @@ class GenericRetrieve extends Controller
             break;
           case 'in':
             $queryModel = $queryModel->whereIn(DB::raw($column), $condition['value']);
+            break;
+          case 'not_null':
+            $queryModel = $queryModel->whereNotNull(DB::raw($column));
+            break;
+          case 'is_null':
+            $queryModel = $queryModel->whereNull(DB::raw($column));
             break;
           default:
             $queryModel = $queryModel->where(DB::raw($column), $condition['clause'], $condition['value']);
