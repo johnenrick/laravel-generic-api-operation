@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Core\GenericCreate;
+use Core\GenericSync;
 use Core\GenericFormValidation;
 use Illuminate\Support\Facades\Validator;
 use Core\TableStructure;
@@ -61,6 +62,7 @@ class GenericController extends Controller
       }
       // $this->responseGenerator->addDebug('request', requester::input());
       $this->responseGenerator->addDebug('payload', config('payload'));
+      $this->responseGenerator->addDebug('user_session', $this->userSession(null));
     }
     public function systemGenerateRetrieveParameter($data){
       return $data;
@@ -155,6 +157,12 @@ class GenericController extends Controller
       $resultObject['success'] = $genericDelete->delete($id, $condition);
       return $resultObject;
     }
+
+    public function syncEntries($entries, $overrideValues = []){
+      $genericSync = new Core\GenericSync($this->tableStructure, $this->model);
+      return $genericSync->sync($entries, $overrideValues);
+    }
+
     public function validator($data, $rules){
       $validation = new Core\GenericFormValidation($this->tableStructure);
       return Validator::make($data, $rules);

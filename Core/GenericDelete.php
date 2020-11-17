@@ -19,7 +19,7 @@ class GenericDelete extends Controller
   }
   public function deleteEntryRecursively($id = null, $condition = null, $tableStructure){
     $result = [];
-    $entryToSave = $this->entryAllowedData($condition, $tableStructure);
+    $entryToDelete = $this->entryAllowedData($condition, $tableStructure);
     $condition ? $this->addConditionStatement($condition, $tableStructure) : null;
     $result['deleted'] = $this->model->deleteEntry($id);
     if($id){
@@ -40,10 +40,10 @@ class GenericDelete extends Controller
     }
   }
   public function entryAllowedData($entry, $tableStructure){
-    $entryToSave = [];
+    $entryToDelete = [];
     foreach($tableStructure['columns'] as $column => $value){
-      $entryToSave[$column] = isset($entry[$column]) ? $entry[$column] : null;
+      $entryToDelete[$column] = isset($entry[$column]) ? $entry[$column] : null;
     }
-    return $entryToSave;
+    return $entryToDelete;
   }
 }
