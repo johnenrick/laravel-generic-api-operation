@@ -36,7 +36,7 @@ class GenericController extends Controller
     ]
     */
     public $tableStructure = [];
-    public $model;
+    public $model = null;
     public $responseGenerator;
     public $user = [];
     public $deleteWithUserId = false;
@@ -48,7 +48,9 @@ class GenericController extends Controller
     ];
     public $retrieveCustomQueryModel = null;
     public function initGenericController(){
-      $this->tableStructure = (new Core\TableStructure($this->tableStructure, $this->model))->getStructure();
+      if($this->model){
+        $this->tableStructure = (new Core\TableStructure($this->tableStructure, $this->model))->getStructure();
+      }
       $this->responseGenerator = new Core\ResponseGenerator();
 
       if(config()->set('payload') == null && requester::input('PAYLOAD')){
